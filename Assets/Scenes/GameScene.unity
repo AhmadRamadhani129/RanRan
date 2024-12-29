@@ -430,7 +430,7 @@ GameObject:
   m_Component:
   - component: {fileID: 668498596}
   m_Layer: 0
-  m_Name: PointItem1 (2)
+  m_Name: PointItem3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -507,7 +507,7 @@ GameObject:
   m_Component:
   - component: {fileID: 861187809}
   m_Layer: 0
-  m_Name: PointItem1 (7)
+  m_Name: PointItem8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -569,7 +569,7 @@ GameObject:
   m_Component:
   - component: {fileID: 991330687}
   m_Layer: 0
-  m_Name: PointItem1 (5)
+  m_Name: PointItem6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -600,7 +600,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1201628786}
   m_Layer: 0
-  m_Name: PointItem1 (3)
+  m_Name: PointItem4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -756,7 +756,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1771691351}
   m_Layer: 0
-  m_Name: PointItem1 (4)
+  m_Name: PointItem5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -849,7 +849,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1829716836}
   m_Layer: 0
-  m_Name: PointItem1 (1)
+  m_Name: PointItem2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -948,7 +948,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1917614510}
   m_Layer: 0
-  m_Name: PointItem1 (6)
+  m_Name: PointItem7
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -979,7 +979,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1961908063}
   m_Layer: 0
-  m_Name: PointItem1 (8)
+  m_Name: PointItem9
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1105,6 +1105,7 @@ MonoBehaviour:
   itemPrefab: {fileID: 4128681099264025766, guid: ffa5d01eab8595c489235fe236327b9e, type: 3}
   portalPrefab: {fileID: 7684703393625281322, guid: b1de20f59ee0aae4fb4107f415c5f127, type: 3}
   portalPosition: {fileID: 455580304}
+  playerCount: 0
 --- !u!114 &2030308035
 MonoBehaviour:
   m_ObjectHideFlags: 0

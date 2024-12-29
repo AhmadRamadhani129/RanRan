@@ -9,6 +9,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 {
     private const string GAME_SCENE_NAME = "GameScene";
 
+    public static NetworkManager instance;
     private bool isLoadingScene = false;
 
     private Dictionary<string, RoomInfo> cachedRoomList;
@@ -173,6 +174,19 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     #endregion
 
     #region Unity Methods
+    private void Awake()
+    {
+        if (instance != null)
+        {
+            Destroy(this.gameObject);
+        }
+        else
+        {
+            instance = this;
+            DontDestroyOnLoad(this.gameObject);
+        }
+    }
+
     void Start()
     {
         ActivatePanel(Login_UI_Panel.name);
@@ -338,7 +352,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         roomListGameObjects.Clear();
     }
 
-    private void ActivatePanel(string panelToBeActivated)
+    public void ActivatePanel(string panelToBeActivated)
     {
         Login_UI_Panel.SetActive(panelToBeActivated.Equals(Login_UI_Panel.name));
         GameOptions_UI_Panel.SetActive(panelToBeActivated.Equals(GameOptions_UI_Panel.name));
@@ -348,6 +362,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         JoinRandomRoom_UI_Panel.SetActive(panelToBeActivated.Equals(JoinRandomRoom_UI_Panel.name));
         JoinRoomPassword_UI_Panel.SetActive(panelToBeActivated.Equals(JoinRoomPassword_UI_Panel.name));
     }
+
+
 
     public void OnStartGameButtonClicked()
     {

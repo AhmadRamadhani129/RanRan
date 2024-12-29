@@ -30,6 +30,10 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     private List<int> usedSpawnPoints = new List<int>();
     private List<int> usedItemSpawnPoints = new List<int>();
 
+    private bool itemsSpawned = false;
+    private Dictionary<int, bool> playerStatus; // true jika mati atau selesai
+
+
     private void Awake()
     {
         if (instance != null)
@@ -47,11 +51,51 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.IsConnected)
         {
-            totalItem =0;
+            playerStatus = new Dictionary<int, bool>();
+            foreach (var player in PhotonNetwork.PlayerList)
+            {
+                playerStatus[player.ActorNumber] = false; // Semua pemain awalnya hidup
+            }
             SpawnPlayer();
-            SpawnItems(); 
+            SpawnItems();
         }
     }
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        Debug.Log(newPlayer.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name + " " + PhotonNetwork.CurrentRoom.PlayerCount);
+        base.OnPlayerEnteredRoom(newPlayer);
+        playerStatus[newPlayer.ActorNumber] = false; // Tambahkan pemain baru sebagai hidup
+    }
+
+    public void PlayerDied(int actorNumber)
+    {
+        if (playerStatus.ContainsKey(actorNumber))
+        {
+            playerStatus[actorNumber] = true;
+            Debug.Log("Player " + actorNumber + " has died.");
+            CheckGameOver();
+        }
+    }
+
+    private void CheckGameOver()
+    {
+        if (AreAllPlayersDeadOrCompleted())
+        {
+            Debug.Log("All players are dead or have completed the game.");
+            // Tambahkan logika untuk mengakhiri permainan jika semua pemain mati
+        }
+    }
+
+    public bool AreAllPlayersDeadOrCompleted()
+    {
+        foreach (bool isDead in playerStatus.Values)
+        {
+            if (!isDead) return false;
+        }
+        return true;
+    }
+
 
     private IEnumerator WaitForTotalText(int itemCount)
     {
@@ -103,7 +147,11 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
 
     private void SpawnItems()
     {
-        photonView.RPC("RPC_SpawnItems", RpcTarget.AllBuffered);
+        if (!itemsSpawned)
+        {
+            photonView.RPC("RPC_SpawnItems", RpcTarget.AllBuffered);
+            itemsSpawned = true;
+        }
     }
 
     [PunRPC]
@@ -114,11 +162,18 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void RPC_SpawnItems()
     {
+        if (itemsSpawned)
+        {
+            return;
+        }
+
+        itemsSpawned = true;
+
         if (itemPrefab != null && itemSpawnPoints.Length > 0)
         {
-            usedItemSpawnPoints.Clear(); // Reset spawn point untuk item
+            usedItemSpawnPoints.Clear();
 
-            int itemCount = 0; // Count jumlah item yang di spwan
+            int itemCount = 0;
 
             for (int i = 0; i < 6; i++)
             {
@@ -135,9 +190,11 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
                     break;
                 }
             }
+
             photonView.RPC("RPC_UpdateItemCountUI", RpcTarget.AllBuffered, itemCount);
         }
     }
+
     [PunRPC]
     private void RPC_AddItem()
     {
@@ -215,12 +272,6 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         Debug.Log(PhotonNetwork.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name);
     }
 
-    public override void OnPlayerEnteredRoom(Player newPlayer)
-    {
-        Debug.Log(newPlayer.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name + " " + PhotonNetwork.CurrentRoom.PlayerCount);
-        playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
-    }
-
     public void LeaveRoom()
     {
         PhotonNetwork.LeaveRoom();
@@ -228,6 +279,11 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
 
     public override void OnLeftRoom()
     {
+        itemsSpawned = false;
+
+        NetworkManager.instance.ActivatePanel("InsideRoomPanel");
         SceneManager.LoadScene("LobbyScene");
     }
+
+
 }

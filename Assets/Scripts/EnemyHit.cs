@@ -21,11 +21,15 @@ public class EnemyHit : MonoBehaviourPunCallbacks
     {
         if (other.CompareTag("Player"))
         {
-            if(photonView.IsMine)
+            PhotonView playerPhotonView = other.GetComponent<PhotonView>();
+
+            if (playerPhotonView != null && playerPhotonView.IsMine)
             {
-                RanRanGameManager.instance.LeaveRoom();
+                RanRanGameManager.instance.PlayerDied(playerPhotonView.Owner.ActorNumber);
+                RanRanGameManager.instance.LeaveRoom(); // Kembali ke Inside Room Panel
             }
-           
         }
     }
+
+
 }

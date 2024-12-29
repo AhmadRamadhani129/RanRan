@@ -28,9 +28,11 @@ public class EnemyManager : MonoBehaviourPunCallbacks
     {
         if (enemyPrefab != null && spawnPoint != null)
         {
-            enemyInstance = PhotonNetwork.Instantiate(enemyPrefab.name, spawnPoint.position, spawnPoint.rotation);
+            // Gunakan InstantiateRoomObject agar musuh tidak terikat dengan player
+            enemyInstance = PhotonNetwork.InstantiateRoomObject(enemyPrefab.name, spawnPoint.position, spawnPoint.rotation);
         }
     }
+
 
     public override void OnJoinedRoom()
     {
