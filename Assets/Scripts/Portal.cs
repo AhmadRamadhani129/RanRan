@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
-using ExitGames.Client.Photon; // Untuk menggunakan Hashtable Photon
 
 public class Portal : MonoBehaviourPunCallbacks
 {
@@ -13,20 +12,13 @@ public class Portal : MonoBehaviourPunCallbacks
     {
         if (other.CompareTag("Player"))
         {
-            if (photonView.IsMine)
+            PhotonView otherPhotonView = other.GetComponent<PhotonView>();
+
+            if (otherPhotonView != null && !playersInCollider.Contains(otherPhotonView.Owner.ActorNumber))
             {
-                PhotonView otherPhotonView = other.GetComponent<PhotonView>();
+                playersInCollider.Add(otherPhotonView.Owner.ActorNumber); // Tambahkan pemain ke daftar
 
-                if (otherPhotonView != null && !playersInCollider.Contains(otherPhotonView.Owner.ActorNumber))
-                {
-                    playersInCollider.Add(otherPhotonView.Owner.ActorNumber); // Tambahkan pemain ke daftar
-
-                    // Cek apakah jumlah pemain dalam collider sama dengan jumlah pemain aktif di room
-                    if (playersInCollider.Count == PhotonNetwork.CurrentRoom.PlayerCount)
-                    {
-                        PhotonNetwork.LoadLevel("LobbyScene"); // Kembali ke RoomScene
-                    }
-                }
+                CheckAllPlayersInPortal();
             }
         }
     }
@@ -42,5 +34,41 @@ public class Portal : MonoBehaviourPunCallbacks
                 playersInCollider.Remove(otherPhotonView.Owner.ActorNumber); // Hapus pemain dari daftar jika keluar
             }
         }
+    }
+
+    private void CheckAllPlayersInPortal()
+    {
+        // Dapatkan GameManager untuk mengakses status pemain
+        RanRanGameManager gameManager = RanRanGameManager.instance;
+
+        if (gameManager == null)
+        {
+            Debug.LogError("GameManager instance not found!");
+            return;
+        }
+
+        foreach (Player photonPlayer in PhotonNetwork.PlayerList)
+        {
+            // Cek apakah pemain hidup dan berada di portal
+            if (gameManager.playerStatus.ContainsKey(photonPlayer.ActorNumber) &&
+                !gameManager.playerStatus[photonPlayer.ActorNumber]) // Pemain hidup (bukan spectate)
+            {
+                if (!playersInCollider.Contains(photonPlayer.ActorNumber))
+                {
+                    return; // Ada pemain hidup yang belum di portal
+                }
+            }
+        }
+
+        // Semua pemain hidup berada di portal
+        Debug.Log("All alive players are in the portal. Ending level.");
+        photonView.RPC("HandleAllPlayersInPortal", RpcTarget.All);
+    }
+
+    [PunRPC]
+    private void HandleAllPlayersInPortal()
+    {
+        // Semua pemain keluar dari level
+        RanRanGameManager.instance.OnLeaveLevel();
     }
 }

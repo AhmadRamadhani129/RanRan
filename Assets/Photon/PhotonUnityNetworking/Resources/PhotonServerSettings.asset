@@ -50,6 +50,7 @@ MonoBehaviour:
   - SetTagObjectRPC
   - RequestDestroyObject
   - RPC_DestroyPlayer
+  - HandleAllPlayersInPortal
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

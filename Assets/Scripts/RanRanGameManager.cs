@@ -31,7 +31,7 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     private List<int> usedItemSpawnPoints = new List<int>();
 
     private bool itemsSpawned = false;
-    private Dictionary<int, bool> playerStatus; // true jika mati atau selesai
+    public Dictionary<int, bool> playerStatus; // true jika mati atau selesai
 
     private int playersAlive; // Variabel untuk melacak jumlah pemain yang masih hidup
 

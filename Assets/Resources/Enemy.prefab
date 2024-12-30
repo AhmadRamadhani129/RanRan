@@ -212,8 +212,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  chaseRadius: 20
-  stopChasingRadius: 25
+  chaseRadius: 14
+  stopChasingRadius: 16
 --- !u!195 &5572184572145000077
 NavMeshAgent:
   m_ObjectHideFlags: 0
