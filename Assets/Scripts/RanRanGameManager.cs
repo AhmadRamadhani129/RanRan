@@ -99,13 +99,11 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         if (AreAllPlayersDeadOrCompleted())
         {
             Debug.Log("Game Over. All players dead or completed.");
-            if (PhotonNetwork.IsMasterClient)
-            {
-                PhotonView photonView = PhotonView.Get(this);
-                photonView.RPC("HandleGameOver", RpcTarget.All);
-            }
+            PhotonView photonView = PhotonView.Get(this);
+            photonView.RPC("HandleGameOver", RpcTarget.All); // Panggil ke semua klien
         }
     }
+
 
     public bool AreAllPlayersDeadOrCompleted()
     {
@@ -199,9 +197,17 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void HandleGameOver()
     {
-        // Semua pemain kembali ke lobby
-        RanRanGameManager.instance.OnLeaveLevel();
+        Debug.Log("Game over, switching to LobbyScene.");
+        itemsSpawned = false;
+
+        // Pastikan semua pemain memuat LobbyScene
+        if (PhotonNetwork.IsMasterClient)
+        {
+            ScenesManager.instance.SetCanStart(true); // Tampilkan tombol start game
+        }
+        SceneManager.LoadScene("LobbyScene");
     }
+
 
 
     [PunRPC]
@@ -453,17 +459,29 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         PhotonNetwork.LeaveRoom();
     }
 
+    //public void OnLeaveLevel()
+    //{
+    //    itemsSpawned = false;
+
+    //    ScenesManager.instance.SetCanStart(false); // Tombol start game disembunyikan
+
+    //    if (PhotonNetwork.LocalPlayer.IsMasterClient && AreAllPlayersDeadOrCompleted())
+    //    {
+    //        ScenesManager.instance.SetCanStart(true); // Tampilkan tombol start game
+    //        SceneManager.LoadScene("LobbyScene");
+    //    }
+    //}
+
     public void OnLeaveLevel()
     {
         itemsSpawned = false;
 
         ScenesManager.instance.SetCanStart(false); // Tombol start game disembunyikan
 
-        if (PhotonNetwork.LocalPlayer.IsMasterClient && AreAllPlayersDeadOrCompleted())
-        {
-            ScenesManager.instance.SetCanStart(true); // Tampilkan tombol start game
-            SceneManager.LoadScene("LobbyScene");
-        }
+        // Pastikan semua pemain keluar
+        PhotonView photonView = PhotonView.Get(this);
+        photonView.RPC("HandleGameOver", RpcTarget.All);
     }
+
 
 }
