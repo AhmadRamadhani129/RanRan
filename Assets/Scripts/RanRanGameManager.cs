@@ -4,7 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine.SceneManagement;
-using TMPro; 
+using TMPro;
 
 public class RanRanGameManager : MonoBehaviourPunCallbacks
 {
@@ -33,18 +33,17 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     private bool itemsSpawned = false;
     private Dictionary<int, bool> playerStatus; // true jika mati atau selesai
 
+    private int playersAlive; // Variabel untuk melacak jumlah pemain yang masih hidup
 
-    private void Awake()
+    void Awake()
     {
-        if (instance != null)
+        if (instance != null && instance != this)
         {
-            Destroy(this.gameObject);
+            Destroy(gameObject); // Hapus duplikasi GameManager
+            return;
         }
-        else
-        {
-            instance = this;
-            DontDestroyOnLoad(this.gameObject);
-        }
+        instance = this;
+        DontDestroyOnLoad(gameObject); // Pertahankan antara perubahan scene
     }
 
     void Start()
@@ -52,10 +51,13 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.IsConnected)
         {
             playerStatus = new Dictionary<int, bool>();
+            playersAlive = PhotonNetwork.PlayerList.Length; // Semua pemain awalnya hidup
+
             foreach (var player in PhotonNetwork.PlayerList)
             {
-                playerStatus[player.ActorNumber] = false; // Semua pemain awalnya hidup
+                playerStatus[player.ActorNumber] = false;
             }
+
             SpawnPlayer();
             SpawnItems();
         }
@@ -65,7 +67,8 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     {
         Debug.Log(newPlayer.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name + " " + PhotonNetwork.CurrentRoom.PlayerCount);
         base.OnPlayerEnteredRoom(newPlayer);
-        playerStatus[newPlayer.ActorNumber] = false; // Tambahkan pemain baru sebagai hidup
+        playerStatus[newPlayer.ActorNumber] = false;
+        playersAlive++;
     }
 
     public void PlayerDied(int actorNumber)
@@ -73,17 +76,34 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         if (playerStatus.ContainsKey(actorNumber))
         {
             playerStatus[actorNumber] = true;
-            Debug.Log("Player " + actorNumber + " has died.");
+            playersAlive--;
+
+            Debug.Log("Player " + actorNumber + " has died. Players Alive: " + playersAlive);
+
+            PhotonView.Get(this).RPC("RPC_UpdatePlayerStatus", RpcTarget.AllBuffered, actorNumber, true);
+
+            if (PhotonNetwork.LocalPlayer.ActorNumber == actorNumber)
+            {
+                GameObject localPlayer = PhotonNetwork.LocalPlayer.TagObject as GameObject;
+                SetPlayerToSpectator(localPlayer);
+            }
+
             CheckGameOver();
         }
     }
+
+
 
     private void CheckGameOver()
     {
         if (AreAllPlayersDeadOrCompleted())
         {
-            Debug.Log("All players are dead or have completed the game.");
-            // Tambahkan logika untuk mengakhiri permainan jika semua pemain mati
+            Debug.Log("Game Over. All players dead or completed.");
+            if (PhotonNetwork.IsMasterClient)
+            {
+                PhotonView photonView = PhotonView.Get(this);
+                photonView.RPC("HandleGameOver", RpcTarget.All);
+            }
         }
     }
 
@@ -95,7 +115,6 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         }
         return true;
     }
-
 
     private IEnumerator WaitForTotalText(int itemCount)
     {
@@ -135,8 +154,23 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
             if (spawnIndexStr != "None")
             {
                 int spawnIndex = int.Parse(spawnIndexStr);
+
+                // Spawn player di lokasi spawn point yang dipilih
                 GameObject player = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoints[spawnIndex].transform.position, Quaternion.identity);
-                player.GetComponent<PhotonView>().ObservedComponents.Add(player.GetComponent<PhotonTransformView>());
+
+                // Pastikan komponen terkait sinkronisasi ditambahkan (jika ada)
+                PhotonView playerView = player.GetComponent<PhotonView>();
+                if (playerView != null)
+                {
+                    playerView.ObservedComponents.Add(player.GetComponent<PhotonTransformView>());
+                }
+
+                // Atur TagObject untuk pemain lokal
+                PhotonNetwork.LocalPlayer.TagObject = player;
+                Debug.Log($"Player spawned and TagObject set for {PhotonNetwork.LocalPlayer.NickName} at spawn point {spawnIndex}");
+
+                // Broadcast ke semua klien untuk menyinkronkan TagObject
+                PhotonView.Get(this).RPC("SetTagObjectRPC", RpcTarget.AllBuffered, PhotonNetwork.LocalPlayer.ActorNumber, playerView.ViewID);
             }
             else
             {
@@ -145,20 +179,37 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         }
     }
 
+
+
     private void SpawnItems()
     {
-        if (!itemsSpawned)
+        // Hanya host spawner yang bertanggung jawab untuk memulai spawn
+        if (!itemsSpawned && IsRoomHost())
         {
             photonView.RPC("RPC_SpawnItems", RpcTarget.AllBuffered);
             itemsSpawned = true;
         }
     }
+    private bool IsRoomHost()
+    {
+        // Pemain pertama di PlayerList dianggap sebagai host spawner
+        return PhotonNetwork.LocalPlayer.ActorNumber == PhotonNetwork.PlayerList[0].ActorNumber;
+    }
+
+    [PunRPC]
+    private void HandleGameOver()
+    {
+        // Semua pemain kembali ke lobby
+        RanRanGameManager.instance.OnLeaveLevel();
+    }
+
 
     [PunRPC]
     private void RPC_UpdateItemCountUI(int itemCount)
     {
         StartCoroutine(WaitForTotalText(itemCount));
     }
+
     [PunRPC]
     private void RPC_SpawnItems()
     {
@@ -181,7 +232,13 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
                 if (spawnIndexStr != "None")
                 {
                     int spawnIndex = int.Parse(spawnIndexStr);
-                    PhotonNetwork.Instantiate(itemPrefab.name, itemSpawnPoints[spawnIndex].transform.position, Quaternion.identity);
+
+                    // Hanya host spawner yang memanggil Instantiate
+                    if (IsRoomHost())
+                    {
+                        PhotonNetwork.Instantiate(itemPrefab.name, itemSpawnPoints[spawnIndex].transform.position, Quaternion.identity);
+                    }
+
                     itemCount++;
                 }
                 else
@@ -191,9 +248,24 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
                 }
             }
 
-            photonView.RPC("RPC_UpdateItemCountUI", RpcTarget.AllBuffered, itemCount);
+            // Host spawner memancarkan jumlah item ke semua klien
+            if (IsRoomHost())
+            {
+                photonView.RPC("RPC_UpdateItemCountUI", RpcTarget.AllBuffered, itemCount);
+            }
         }
     }
+
+    [PunRPC]
+    private void RPC_UpdatePlayerStatus(int actorNumber, bool isDead)
+    {
+        if (playerStatus.ContainsKey(actorNumber))
+        {
+            playerStatus[actorNumber] = isDead;
+        }
+    }
+
+
 
     [PunRPC]
     private void RPC_AddItem()
@@ -205,6 +277,40 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
             PhotonNetwork.Instantiate(portalPrefab.name, portalPosition.transform.position, Quaternion.identity);
         }
     }
+    [PunRPC]
+    private void SetTagObjectRPC(int actorNumber, int viewID)
+    {
+        PhotonView view = PhotonView.Find(viewID);
+        if (view != null)
+        {
+            Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
+            if (player != null)
+            {
+                player.TagObject = view.gameObject;
+                Debug.Log($"TagObject synchronized for player {actorNumber}: {view.gameObject.name}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"PhotonView with ID {viewID} not found for player {actorNumber}.");
+        }
+    }
+
+    [PunRPC]
+    public void RPC_DestroyPlayer(int viewID)
+    {
+        PhotonView playerView = PhotonView.Find(viewID);
+        if (playerView != null)
+        {
+            Destroy(playerView.gameObject);
+            Debug.Log($"Player with viewID {viewID} destroyed.");
+        }
+        else
+        {
+            Debug.LogWarning($"Player with viewID {viewID} not found.");
+        }
+    }
+
 
 
     private void UpdateItemCountUI(int itemCount)
@@ -223,7 +329,6 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     {
         List<int> availableSpawnPoints = new List<int>();
 
-        // Cari titik spawn yang belum dipakai
         for (int i = 0; i < spawnPoints.Length; i++)
         {
             if (!usedSpawnPoints.Contains(i))
@@ -234,7 +339,6 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
 
         if (availableSpawnPoints.Count > 0)
         {
-            // Munculkan Titik spawn random
             int randomIndex = Random.Range(0, availableSpawnPoints.Count);
             int selectedIndex = availableSpawnPoints[randomIndex];
             usedSpawnPoints.Add(selectedIndex);
@@ -260,30 +364,106 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         {
             int randomIndex = Random.Range(0, availableItemSpawnPoints.Count);
             int selectedIndex = availableItemSpawnPoints[randomIndex];
-            usedItemSpawnPoints.Add(selectedIndex); 
+            usedItemSpawnPoints.Add(selectedIndex);
             return selectedIndex.ToString();
         }
 
-        return "None"; 
+        return "None";
+    }
+    public void SetPlayerToSpectator(GameObject player)
+    {
+        Debug.Log("Di RANRAN: " + player.name);
+        player.GetComponent<PlayerMovementController>().enabled = false;
+
+        Renderer playerRenderer = player.GetComponent<Renderer>();
+        if (playerRenderer != null)
+        {
+            playerRenderer.material.color = Color.gray;
+        }
+
+        EnableSpectatorCamera(player);
     }
 
-    public override void OnJoinedRoom()
+    private void EnableSpectatorCamera(GameObject player)
     {
-        Debug.Log(PhotonNetwork.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name);
+        // Disable player's camera
+        Camera playerCamera = player.GetComponentInChildren<Camera>();
+        if (playerCamera != null)
+        {
+            playerCamera.enabled = false;
+        }
+
+        // Instantiate the spectator camera
+        GameObject spectatorCamera = Instantiate(Resources.Load("SpectatorCamera")) as GameObject;
+        SpectatorCameraController followCamera = spectatorCamera.GetComponent<SpectatorCameraController>();
+
+        // Find the next alive player to follow
+        GameObject nextAlivePlayer = GetNextAlivePlayer();
+        if (nextAlivePlayer != null)
+        {
+            followCamera.SetTarget(nextAlivePlayer.transform);
+        }
+        else
+        {
+            Debug.LogWarning("No alive players to follow.");
+        }
     }
+
+
+    public GameObject GetNextAlivePlayer()
+    {
+        foreach (Player photonPlayer in PhotonNetwork.PlayerList)
+        {
+            if (playerStatus.ContainsKey(photonPlayer.ActorNumber) && !playerStatus[photonPlayer.ActorNumber])
+            {
+                Debug.Log($"Checking player {photonPlayer.ActorNumber} - IsDead: {playerStatus[photonPlayer.ActorNumber]}");
+
+                if (photonPlayer.TagObject != null)
+                {
+                    GameObject playerGameObject = photonPlayer.TagObject as GameObject;
+                    if (playerGameObject != null)
+                    {
+                        Debug.Log($"Found alive player: {photonPlayer.ActorNumber}");
+                        return playerGameObject;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Player {photonPlayer.ActorNumber} has a null TagObject.");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"Player {photonPlayer.ActorNumber} has no TagObject.");
+                }
+            }
+        }
+        Debug.LogWarning("No alive players found.");
+        CheckGameOver();
+        return null;
+    }
+
+
+
+
+
+
 
     public void LeaveRoom()
     {
         PhotonNetwork.LeaveRoom();
     }
 
-    public override void OnLeftRoom()
+    public void OnLeaveLevel()
     {
         itemsSpawned = false;
 
-        NetworkManager.instance.ActivatePanel("InsideRoomPanel");
-        SceneManager.LoadScene("LobbyScene");
-    }
+        ScenesManager.instance.SetCanStart(false); // Tombol start game disembunyikan
 
+        if (PhotonNetwork.LocalPlayer.IsMasterClient && AreAllPlayersDeadOrCompleted())
+        {
+            ScenesManager.instance.SetCanStart(true); // Tampilkan tombol start game
+            SceneManager.LoadScene("LobbyScene");
+        }
+    }
 
 }

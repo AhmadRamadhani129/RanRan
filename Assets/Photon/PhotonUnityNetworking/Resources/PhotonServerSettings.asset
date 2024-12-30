@@ -45,6 +45,11 @@ MonoBehaviour:
   - RPC_SpawnItems
   - RPC_UpdateItemCountUI
   - RPC_AddItem
+  - HandleGameOver
+  - RPC_UpdatePlayerStatus
+  - SetTagObjectRPC
+  - RequestDestroyObject
+  - RPC_DestroyPlayer
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

@@ -9,7 +9,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 {
     private const string GAME_SCENE_NAME = "GameScene";
 
-    public static NetworkManager instance;
+    private bool canStart;
     private bool isLoadingScene = false;
 
     private Dictionary<string, RoomInfo> cachedRoomList;
@@ -57,7 +57,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     #region UI Callbacks
 
-    //Method Login
     public void OnLoginButtonClicked()
     {
         string playerName = playerNameInput.text;
@@ -78,8 +77,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         string roomName = roomNameInputField.text;
         int maxPlayers;
         string roomPassword = roomPasswordInputField.text;
-        
-        //Ketika nama room kosong, akan dibuat angka random
+
         if (string.IsNullOrEmpty(roomName))
         {
             roomName = "Room " + Random.Range(1000, 10000);
@@ -89,13 +87,10 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
         ExitGames.Client.Photon.Hashtable customRoomProperties = new ExitGames.Client.Photon.Hashtable();
 
-        //Tambah password ke custom properties
         customRoomProperties.Add("password", roomPassword);
         roomOptions.CustomRoomProperties = customRoomProperties;
-        //Buat string untuk password
-        roomOptions.CustomRoomPropertiesForLobby = new string[] { "password" };
 
-        //Method untuk menampilkan max player
+        roomOptions.CustomRoomPropertiesForLobby = new string[] { "password" };
         if (int.TryParse(maxPlayerInputField.text, out maxPlayers))
         {
             maxPlayers = Mathf.Clamp(maxPlayers, 2, 10);
@@ -128,7 +123,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         CleanUpPlayerList();
         PhotonNetwork.LeaveRoom();
 
-        //Membersihkan semua text flied saat create room
         roomNameInputField.text = "";
         roomPasswordInputField.text = "";
         maxPlayerInputField.text = "";
@@ -142,7 +136,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void OnJoinRoomButtonClicked(string _roomName)
     {
-        //Menyimpan nama room
         selectedRoomName = _roomName;
 
         ActivatePanel(JoinRoomPassword_UI_Panel.name);
@@ -152,7 +145,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         string enteredPassword = roomPasswordInputFieldJoin.text;
 
-        //Membaca custom properties
         if (cachedRoomList.ContainsKey(selectedRoomName))
         {
             RoomInfo selectedRoomInfo = cachedRoomList[selectedRoomName];
@@ -162,7 +154,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
                 if (enteredPassword == roomPassword)
                 {
-                    PhotonNetwork.JoinRoom(selectedRoomName); // Join the room if the password matches
+                    PhotonNetwork.JoinRoom(selectedRoomName);
                 }
                 else
                 {
@@ -171,32 +163,46 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             }
         }
     }
+    
     #endregion
 
     #region Unity Methods
-    private void Awake()
+    void Start()
     {
-        if (instance != null)
+        GameObject objectToDestroy = GameObject.Find("GameManager");
+
+        if (objectToDestroy != null)
         {
-            Destroy(this.gameObject);
+            Destroy(objectToDestroy);
+            Debug.Log(" has been destroyed.");
         }
         else
         {
-            instance = this;
-            DontDestroyOnLoad(this.gameObject);
+            Debug.LogWarning(" not found or is not in DontDestroyOnLoad.");
+        }
+
+        canStart = true;
+
+        startGameButton.GetComponent<Button>().onClick.AddListener(OnStartGameButtonClicked);
+
+        cachedRoomList = new Dictionary<string, RoomInfo>();
+        roomListGameObjects = new Dictionary<string, GameObject>();
+
+        PhotonNetwork.AutomaticallySyncScene = true;
+
+        if (PhotonNetwork.InRoom)
+        {
+            Debug.Log("Player is already in room.");
+            OnJoinedRoom();
+        }
+        else
+        {
+            Debug.Log("Player is not in a room.");
+            ActivatePanel(Login_UI_Panel.name);
         }
     }
 
-    void Start()
-    {
-        ActivatePanel(Login_UI_Panel.name);
-        cachedRoomList = new Dictionary<string, RoomInfo>();
-        roomListGameObjects = new Dictionary<string, GameObject>();
-        startGameButton.GetComponent<Button>().onClick.AddListener(OnStartGameButtonClicked);
 
-        //Menghubungkan Master dan client
-        PhotonNetwork.AutomaticallySyncScene = true;
-    }
 
     void Update()
     {
@@ -224,8 +230,13 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         Debug.Log(PhotonNetwork.LocalPlayer.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name);
+
         ActivatePanel(InsideRoom_UI_Panel.name);
-        if (PhotonNetwork.LocalPlayer.IsMasterClient)
+
+        canStart = ScenesManager.canStart;
+        Debug.Log(canStart);
+
+        if (PhotonNetwork.LocalPlayer.IsMasterClient && canStart)
         {
             startGameButton.SetActive(true);
         }
@@ -239,35 +250,65 @@ public class NetworkManager : MonoBehaviourPunCallbacks
                             PhotonNetwork.CurrentRoom.PlayerCount + "/" +
                             PhotonNetwork.CurrentRoom.MaxPlayers;
 
+        // **Pastikan player list sudah siap dan room tersedia**
+        // Update player list after ensuring room is ready
+        if (PhotonNetwork.CurrentRoom != null)
+        {
+            UpdatePlayerList();
+        }
+        else
+        {
+            Debug.LogError("CurrentRoom is null after joining.");
+        }
+    }
+
+
+    private void UpdatePlayerList()
+    {
+        // Ensure playerListGameObjects is initialized
         if (playerListGameObjects == null)
         {
             playerListGameObjects = new Dictionary<int, GameObject>();
         }
 
-        // Instantiate GameObject Player
         foreach (Player player in PhotonNetwork.PlayerList)
         {
-            GameObject playerListGameobject = Instantiate(playerListPrefab);
-            playerListGameobject.transform.SetParent(playerListContent.transform);
-            playerListGameobject.transform.localScale = Vector3.one; // to prevent scale issues
-            playerListGameobject.transform.Find("PlayerNameText").GetComponent<Text>().text = player.NickName;
-
-            // Mengecek jika ada key yang double
             if (!playerListGameObjects.ContainsKey(player.ActorNumber))
             {
-                if (player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
-                {
-                    playerListGameobject.transform.Find("PlayerIndicator").gameObject.SetActive(true);
-                }
-                else
-                {
-                    playerListGameobject.transform.Find("PlayerIndicator").gameObject.SetActive(false);
-                }
+                GameObject playerListGameObject = Instantiate(playerListPrefab);
+                playerListGameObject.transform.SetParent(playerListContent.transform);
+                playerListGameObject.transform.localScale = Vector3.one; // Prevent scale issues
+                playerListGameObject.transform.Find("PlayerNameText").GetComponent<Text>().text = player.NickName;
 
-                playerListGameObjects.Add(player.ActorNumber, playerListGameobject);
+                // Show player indicator for local player
+                playerListGameObject.transform.Find("PlayerIndicator").gameObject.SetActive(player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber);
+                playerListGameObjects.Add(player.ActorNumber, playerListGameObject);
             }
         }
+
+        if (roomInfoText != null && PhotonNetwork.CurrentRoom != null)
+        {
+            roomInfoText.text = "Room name: " + PhotonNetwork.CurrentRoom.Name + " " +
+                                "Players/Max.players: " +
+                                PhotonNetwork.CurrentRoom.PlayerCount + "/" +
+                                PhotonNetwork.CurrentRoom.MaxPlayers;
+        }
+        else
+        {
+            if (roomInfoText == null)
+            {
+                Debug.LogError("roomInfoText is not assigned!");
+            }
+
+            if (PhotonNetwork.CurrentRoom == null)
+            {
+                Debug.LogError("CurrentRoom is null.");
+            }
+        }
+
     }
+
+
 
 
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
@@ -363,16 +404,21 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         JoinRoomPassword_UI_Panel.SetActive(panelToBeActivated.Equals(JoinRoomPassword_UI_Panel.name));
     }
 
-
-
     public void OnStartGameButtonClicked()
     {
         if (PhotonNetwork.IsMasterClient && !isLoadingScene)
         {
-            isLoadingScene = true;  // Prevent another scene load attempt
+            isLoadingScene = true;
+
+            // Pastikan buffer bersih
+            PhotonNetwork.RemoveBufferedRPCs();
+            PhotonNetwork.DestroyAll();
+
+            // Mulai ulang level
             PhotonNetwork.LoadLevel(1);
         }
     }
+
 
     private void CleanUpPlayerList()
     {

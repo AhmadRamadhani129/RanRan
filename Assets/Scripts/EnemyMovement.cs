@@ -7,8 +7,8 @@ public class EnemyMovement : MonoBehaviour
 {
     [SerializeField] private NavMeshAgent agent;
     [SerializeField] private Transform[] patrolPoints;
-    [SerializeField] private float chaseRadius = 10f;  
-    [SerializeField] private float stopChasingRadius = 15f;
+    [SerializeField] private float chaseRadius = 10f;  // Radius pengejaran
+    [SerializeField] private float stopChasingRadius = 15f; // Radius berhenti mengejar
     private bool isChasing = false;
     private Transform player;
     private Transform currentPatrolPoint;
@@ -16,6 +16,8 @@ public class EnemyMovement : MonoBehaviour
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+
+        // Tentukan titik patrol yang ada
         patrolPoints = new Transform[5];
         for (int i = 1; i <= 5; i++)
         {
@@ -29,38 +31,45 @@ public class EnemyMovement : MonoBehaviour
                 Debug.LogWarning("Point " + i + " not found in the scene!");
             }
         }
+
+        // Mulai patrol
         StartCoroutine(Patrol());
     }
 
     void Update()
     {
+        // Cek keberadaan pemain dalam radius pengejaran
         Collider[] colliders = Physics.OverlapSphere(transform.position, chaseRadius);
-
         bool playerDetected = false;
 
         foreach (var collider in colliders)
         {
             if (collider.CompareTag("Player"))
             {
-                player = collider.transform; 
+                player = collider.transform;
                 playerDetected = true;
                 break;
             }
         }
 
+        // Jika pemain terdeteksi dan musuh belum mengejar
         if (playerDetected && !isChasing)
         {
             StartChasing();
         }
 
-        if (isChasing && Vector3.Distance(transform.position, player.position) > stopChasingRadius)
-        {
-            StopChasing();
-        }
-
+        // Jika musuh sedang mengejar pemain
         if (isChasing)
         {
-            agent.SetDestination(player.position);
+            // Periksa jika pemain keluar dari radius berhenti mengejar
+            if (player == null || Vector3.Distance(transform.position, player.position) > stopChasingRadius)
+            {
+                StopChasing();
+            }
+            else
+            {
+                agent.SetDestination(player.position); // Tetap mengejar pemain
+            }
         }
     }
 
@@ -69,8 +78,15 @@ public class EnemyMovement : MonoBehaviour
         if (!isChasing)
         {
             isChasing = true;
-            agent.SetDestination(player.position); 
-            StopCoroutine(Patrol());
+
+            // Periksa apakah player masih valid sebelum menetapkan tujuan
+            if (player != null)
+            {
+                agent.SetDestination(player.position);
+            }
+
+            // Hentikan coroutine patrol saat mulai mengejar
+            StopAllCoroutines();
         }
     }
 
@@ -79,6 +95,10 @@ public class EnemyMovement : MonoBehaviour
         if (isChasing)
         {
             isChasing = false;
+            Debug.Log("Player out of range or destroyed. Returning to patrol.");
+
+            // Hentikan pengejaran dan mulai patrol lagi
+            StopAllCoroutines();
             StartCoroutine(Patrol());
         }
     }
@@ -87,6 +107,7 @@ public class EnemyMovement : MonoBehaviour
     {
         while (!isChasing)
         {
+            // Pilih titik patrol secara acak
             currentPatrolPoint = GetRandomPatrolPoint();
 
             if (currentPatrolPoint != null)
@@ -100,6 +121,7 @@ public class EnemyMovement : MonoBehaviour
                 yield return null;
             }
 
+            // Beri sedikit waktu sebelum bergerak ke titik patrol berikutnya
             yield return new WaitForSeconds(1f);
         }
     }
@@ -116,5 +138,12 @@ public class EnemyMovement : MonoBehaviour
         return patrolPoints[randomIndex];
     }
 
-
+    // Debug untuk melihat radius pengejaran
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, chaseRadius);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, stopChasingRadius);
+    }
 }
