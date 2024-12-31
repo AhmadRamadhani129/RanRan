@@ -247,7 +247,6 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
                     {
                         int spawnIndex = int.Parse(spawnIndexStr);
 
-                        // Hanya host spawner yang memanggil Instantiate
                         if (IsRoomHost())
                         {
                             PhotonNetwork.Instantiate(itemPrefab.name, itemSpawnPoints[spawnIndex].transform.position, Quaternion.identity);
@@ -262,14 +261,14 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
                     }
                 }
 
-                // Host spawner memancarkan jumlah item ke semua klien
                 if (IsRoomHost())
                 {
-                    photonView.RPC("RPC_UpdateItemCountUI", RpcTarget.AllBuffered, itemCount);
+                    photonView.RPC("RPC_UpdateItemCountUI", RpcTarget.All, itemCount);
                 }
             }
         }
     }
+
 
     [PunRPC]
     private void RPC_UpdatePlayerStatus(int actorNumber, bool isDead)
@@ -491,8 +490,10 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
 
     public void LeaveRoom()
     {
+        PhotonNetwork.RemoveBufferedRPCs(); // Membersihkan RPC yang disimpan di buffer
         PhotonNetwork.LeaveRoom();
     }
+
 
     //public void OnLeaveLevel()
     //{
