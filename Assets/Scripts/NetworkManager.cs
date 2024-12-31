@@ -239,6 +239,17 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
+        PhotonView[] photonViews = FindObjectsOfType<PhotonView>();
+        foreach (PhotonView view in photonViews)
+        {
+            if (view.IsMine)
+            {
+                PhotonNetwork.Destroy(view.gameObject);
+            }
+        }
+
+        PhotonNetwork.RemoveBufferedRPCs();
+
         Debug.Log(PhotonNetwork.LocalPlayer.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name);
 
         ActivatePanel(InsideRoom_UI_Panel.name);
@@ -403,8 +414,16 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             RanRanGameManager.instance = null;
             Debug.Log("RanRanGameManager instance destroyed.");
         }
+        PhotonView[] photonViews = FindObjectsOfType<PhotonView>();
+        foreach (PhotonView view in photonViews)
+        {
+            if (view.IsMine)
+            {
+                PhotonNetwork.Destroy(view.gameObject);
+            }
+        }
+
         PhotonNetwork.RemoveBufferedRPCs();
-        PhotonNetwork.DestroyAll();
 
         SceneManager.LoadScene("LobbyScene");
     }
