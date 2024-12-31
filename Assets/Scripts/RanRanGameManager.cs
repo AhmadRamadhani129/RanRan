@@ -488,7 +488,6 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         // Pastikan semua pemain keluar
         PhotonView photonView = PhotonView.Get(this);
         photonView.RPC("HandleGameOver", RpcTarget.All);
-        PhotonNetwork.RemoveBufferedRPCs();
     }
 
 

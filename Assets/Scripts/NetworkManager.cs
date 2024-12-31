@@ -122,7 +122,13 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public void OnLeaveGameButtonClicked()
     {
         CleanUpPlayerList();
+
+        PhotonNetwork.RemoveBufferedRPCs(); // Hapus semua RPC
+        PhotonNetwork.DestroyAll(); // Hapus semua objek PhotonView
+
         PhotonNetwork.LeaveRoom();
+
+        Debug.Log("Left the room and cleared all buffers.");
 
         roomNameInputField.text = "";
         roomPasswordInputField.text = "";
@@ -225,6 +231,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public override void OnCreatedRoom()
     {
+        ScenesManager.canStart = true;
         Debug.Log(PhotonNetwork.CurrentRoom.Name + " is created");
     }
 
@@ -384,8 +391,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public override void OnLeftRoom()
     {
         Debug.Log("Left the room successfully.");
-
-        PhotonNetwork.RemoveBufferedRPCs();
 
         if (RanRanGameManager.instance != null)
         {
