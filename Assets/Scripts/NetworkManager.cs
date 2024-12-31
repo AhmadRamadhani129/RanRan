@@ -391,6 +391,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             RanRanGameManager.instance = null;
             Debug.Log("RanRanGameManager instance destroyed.");
         }
+        PhotonNetwork.RemoveBufferedRPCs();
+
         SceneManager.LoadScene("LobbyScene");
     }
 
