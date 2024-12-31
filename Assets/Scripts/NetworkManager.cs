@@ -237,6 +237,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
+        PhotonNetwork.RemoveBufferedRPCs();
         Debug.Log(PhotonNetwork.LocalPlayer.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name);
 
         ActivatePanel(InsideRoom_UI_Panel.name);
@@ -260,6 +261,9 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
         // **Pastikan player list sudah siap dan room tersedia**
         // Update player list after ensuring room is ready
+
+
+
         if (PhotonNetwork.CurrentRoom != null)
         {
             UpdatePlayerList();
