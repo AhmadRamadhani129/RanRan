@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Photon.Pun;
 using Photon.Realtime;
+using UnityEngine.SceneManagement;
 
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
@@ -376,8 +377,21 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         }
         roomInfoText.text = "Room name: " + PhotonNetwork.CurrentRoom.Name + " " +
                             "Players/Max.players: " +
+                            "Players/Max.players: " +
                             PhotonNetwork.CurrentRoom.PlayerCount + "/" +
                             PhotonNetwork.CurrentRoom.MaxPlayers;
+    }
+    public override void OnLeftRoom()
+    {
+        Debug.Log("Left the room successfully.");
+
+        if (RanRanGameManager.instance != null)
+        {
+            Destroy(RanRanGameManager.instance.gameObject);
+            RanRanGameManager.instance = null;
+            Debug.Log("RanRanGameManager instance destroyed.");
+        }
+        SceneManager.LoadScene("LobbyScene");
     }
 
     #endregion

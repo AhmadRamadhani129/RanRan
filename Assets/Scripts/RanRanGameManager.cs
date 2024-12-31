@@ -448,11 +448,18 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         return null;
     }
 
+    public override void OnLeftRoom()
+    {
+        Debug.Log("Left the room successfully.");
 
+        if (instance != null)
+        {
+            Destroy(instance.gameObject);
+            instance = null;
+        }
 
-
-
-
+        SceneManager.LoadScene("LobbyScene");
+    }
 
     public void LeaveRoom()
     {
