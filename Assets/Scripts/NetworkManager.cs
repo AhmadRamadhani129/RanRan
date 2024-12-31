@@ -385,16 +385,18 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("Left the room successfully.");
 
+        PhotonNetwork.RemoveBufferedRPCs();
+
         if (RanRanGameManager.instance != null)
         {
             Destroy(RanRanGameManager.instance.gameObject);
             RanRanGameManager.instance = null;
             Debug.Log("RanRanGameManager instance destroyed.");
         }
-        PhotonNetwork.RemoveBufferedRPCs();
 
         SceneManager.LoadScene("LobbyScene");
     }
+
 
     #endregion
 
