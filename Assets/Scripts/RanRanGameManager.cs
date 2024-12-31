@@ -197,15 +197,18 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void HandleGameOver()
     {
-        Debug.Log("Game over, switching to LobbyScene.");
-        itemsSpawned = false;
-
-        // Pastikan semua pemain memuat LobbyScene
-        if (PhotonNetwork.IsMasterClient)
+        if (SceneManager.GetActiveScene().name == "GameScene")
         {
-            ScenesManager.instance.SetCanStart(true); // Tampilkan tombol start game
+            Debug.Log("Game over, switching to LobbyScene.");
+            itemsSpawned = false;
+
+            // Pastikan semua pemain memuat LobbyScene
+            if (PhotonNetwork.IsMasterClient)
+            {
+                ScenesManager.instance.SetCanStart(true); // Tampilkan tombol start game
+            }
+            SceneManager.LoadScene("LobbyScene");
         }
-        SceneManager.LoadScene("LobbyScene");
     }
 
 
@@ -213,51 +216,57 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void RPC_UpdateItemCountUI(int itemCount)
     {
-        StartCoroutine(WaitForTotalText(itemCount));
+        if (SceneManager.GetActiveScene().name == "GameScene")
+        {
+            StartCoroutine(WaitForTotalText(itemCount));
+        }
     }
 
     [PunRPC]
     private void RPC_SpawnItems()
     {
-        if (itemsSpawned)
+        if (SceneManager.GetActiveScene().name == "GameScene")
         {
-            return;
-        }
-
-        itemsSpawned = true;
-
-        if (itemPrefab != null && itemSpawnPoints.Length > 0)
-        {
-            usedItemSpawnPoints.Clear();
-
-            int itemCount = 0;
-
-            for (int i = 0; i < 6; i++)
+            if (itemsSpawned)
             {
-                string spawnIndexStr = GetRandomItemSpawnIndex();
-                if (spawnIndexStr != "None")
-                {
-                    int spawnIndex = int.Parse(spawnIndexStr);
-
-                    // Hanya host spawner yang memanggil Instantiate
-                    if (IsRoomHost())
-                    {
-                        PhotonNetwork.Instantiate(itemPrefab.name, itemSpawnPoints[spawnIndex].transform.position, Quaternion.identity);
-                    }
-
-                    itemCount++;
-                }
-                else
-                {
-                    Debug.LogWarning("No available spawn points for item!");
-                    break;
-                }
+                return;
             }
 
-            // Host spawner memancarkan jumlah item ke semua klien
-            if (IsRoomHost())
+            itemsSpawned = true;
+
+            if (itemPrefab != null && itemSpawnPoints.Length > 0)
             {
-                photonView.RPC("RPC_UpdateItemCountUI", RpcTarget.AllBuffered, itemCount);
+                usedItemSpawnPoints.Clear();
+
+                int itemCount = 0;
+
+                for (int i = 0; i < 6; i++)
+                {
+                    string spawnIndexStr = GetRandomItemSpawnIndex();
+                    if (spawnIndexStr != "None")
+                    {
+                        int spawnIndex = int.Parse(spawnIndexStr);
+
+                        // Hanya host spawner yang memanggil Instantiate
+                        if (IsRoomHost())
+                        {
+                            PhotonNetwork.Instantiate(itemPrefab.name, itemSpawnPoints[spawnIndex].transform.position, Quaternion.identity);
+                        }
+
+                        itemCount++;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("No available spawn points for item!");
+                        break;
+                    }
+                }
+
+                // Host spawner memancarkan jumlah item ke semua klien
+                if (IsRoomHost())
+                {
+                    photonView.RPC("RPC_UpdateItemCountUI", RpcTarget.AllBuffered, itemCount);
+                }
             }
         }
     }
@@ -265,9 +274,12 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void RPC_UpdatePlayerStatus(int actorNumber, bool isDead)
     {
-        if (playerStatus.ContainsKey(actorNumber))
+        if (SceneManager.GetActiveScene().name == "GameScene")
         {
-            playerStatus[actorNumber] = isDead;
+            if (playerStatus.ContainsKey(actorNumber))
+            {
+                playerStatus[actorNumber] = isDead;
+            }
         }
     }
 
@@ -276,44 +288,53 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void RPC_AddItem()
     {
-        totalItem++;
-        UpdateItemCountUI(totalItem);
-        if (totalItem == 6)
+        if(SceneManager.GetActiveScene().name == "GameScene")
         {
-            PhotonNetwork.Instantiate(portalPrefab.name, portalPosition.transform.position, Quaternion.identity);
+            totalItem++;
+            UpdateItemCountUI(totalItem);
+            if (totalItem == 6)
+            {
+                PhotonNetwork.Instantiate(portalPrefab.name, portalPosition.transform.position, Quaternion.identity);
+            }
         }
     }
     [PunRPC]
     private void SetTagObjectRPC(int actorNumber, int viewID)
     {
-        PhotonView view = PhotonView.Find(viewID);
-        if (view != null)
+        if (SceneManager.GetActiveScene().name == "GameScene")
         {
-            Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
-            if (player != null)
+            PhotonView view = PhotonView.Find(viewID);
+            if (view != null)
             {
-                player.TagObject = view.gameObject;
-                Debug.Log($"TagObject synchronized for player {actorNumber}: {view.gameObject.name}");
+                Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
+                if (player != null)
+                {
+                    player.TagObject = view.gameObject;
+                    Debug.Log($"TagObject synchronized for player {actorNumber}: {view.gameObject.name}");
+                }
             }
-        }
-        else
-        {
-            Debug.LogWarning($"PhotonView with ID {viewID} not found for player {actorNumber}.");
+            else
+            {
+                Debug.LogWarning($"PhotonView with ID {viewID} not found for player {actorNumber}.");
+            }
         }
     }
 
     [PunRPC]
     public void RPC_DestroyPlayer(int viewID)
     {
-        PhotonView playerView = PhotonView.Find(viewID);
-        if (playerView != null)
+        if (SceneManager.GetActiveScene().name == "GameScene")
         {
-            Destroy(playerView.gameObject);
-            Debug.Log($"Player with viewID {viewID} destroyed.");
-        }
-        else
-        {
-            Debug.LogWarning($"Player with viewID {viewID} not found.");
+            PhotonView playerView = PhotonView.Find(viewID);
+            if (playerView != null)
+            {
+                Destroy(playerView.gameObject);
+                Debug.Log($"Player with viewID {viewID} destroyed.");
+            }
+            else
+            {
+                Debug.LogWarning($"Player with viewID {viewID} not found.");
+            }
         }
     }
 

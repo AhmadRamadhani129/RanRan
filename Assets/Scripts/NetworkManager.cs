@@ -137,12 +137,14 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void OnJoinRandomRoomButtonClicked()
     {
+        PhotonNetwork.RemoveBufferedRPCs();
         ActivatePanel(JoinRandomRoom_UI_Panel.name);
         PhotonNetwork.JoinRandomRoom();
     }
 
     public void OnJoinRoomButtonClicked(string _roomName)
     {
+        PhotonNetwork.RemoveBufferedRPCs();
         selectedRoomName = _roomName;
 
         ActivatePanel(JoinRoomPassword_UI_Panel.name);
@@ -402,6 +404,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             RanRanGameManager.instance = null;
             Debug.Log("RanRanGameManager instance destroyed.");
         }
+        PhotonNetwork.RemoveBufferedRPCs();
+        PhotonNetwork.DestroyAll();
 
         SceneManager.LoadScene("LobbyScene");
     }
