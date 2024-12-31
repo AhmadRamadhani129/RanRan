@@ -473,6 +473,12 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("Left the room successfully.");
 
+        itemsSpawned = false;
+        playerStatus.Clear();
+
+        PhotonNetwork.RemoveBufferedRPCs();
+        PhotonNetwork.DestroyAll();
+
         if (instance != null)
         {
             Destroy(instance.gameObject);
@@ -481,6 +487,7 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
 
         SceneManager.LoadScene("LobbyScene");
     }
+
 
     public void LeaveRoom()
     {
