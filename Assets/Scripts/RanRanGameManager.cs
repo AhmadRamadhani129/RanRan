@@ -48,18 +48,21 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
-        if (PhotonNetwork.IsConnected)
+        if (SceneManager.GetActiveScene().name == "GameScene")
         {
-            playerStatus = new Dictionary<int, bool>();
-            playersAlive = PhotonNetwork.PlayerList.Length; // Semua pemain awalnya hidup
-
-            foreach (var player in PhotonNetwork.PlayerList)
+            if (PhotonNetwork.IsConnected)
             {
-                playerStatus[player.ActorNumber] = false;
-            }
+                playerStatus = new Dictionary<int, bool>();
+                playersAlive = PhotonNetwork.PlayerList.Length; // Semua pemain awalnya hidup
 
-            SpawnPlayer();
-            SpawnItems();
+                foreach (var player in PhotonNetwork.PlayerList)
+                {
+                    playerStatus[player.ActorNumber] = false;
+                }
+
+                SpawnPlayer();
+                SpawnItems();
+            }
         }
     }
 

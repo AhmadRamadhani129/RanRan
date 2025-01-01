@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
+using UnityEngine.SceneManagement;
 
 public class EnemyManager : MonoBehaviourPunCallbacks
 {
@@ -14,11 +15,14 @@ public class EnemyManager : MonoBehaviourPunCallbacks
     // Start is called before the first frame update
     void Start()
     {
-        if (PhotonNetwork.IsConnected)
+        if (SceneManager.GetActiveScene().name == "GameScene")
         {
-            if (PhotonNetwork.IsMasterClient)
+            if (PhotonNetwork.IsConnected)
             {
-                SpawnEnemy();
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    SpawnEnemy();
+                }
             }
         }
     }
@@ -36,11 +40,14 @@ public class EnemyManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        base.OnJoinedRoom();
-
-        if (enemyInstance == null && PhotonNetwork.IsMasterClient)
+        if (SceneManager.GetActiveScene().name == "GameScene")
         {
-            SpawnEnemy();
+            base.OnJoinedRoom();
+
+            if (enemyInstance == null && PhotonNetwork.IsMasterClient)
+            {
+                SpawnEnemy();
+            }
         }
     }
 }
