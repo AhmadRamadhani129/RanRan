@@ -123,9 +123,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         CleanUpPlayerList();
 
-        PhotonNetwork.RemoveBufferedRPCs(); // Hapus semua RPC
-        PhotonNetwork.DestroyAll(); // Hapus semua objek PhotonView
-
         PhotonNetwork.LeaveRoom();
 
         Debug.Log("Left the room and cleared all buffers.");
@@ -239,17 +236,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        PhotonView[] photonViews = FindObjectsOfType<PhotonView>();
-        foreach (PhotonView view in photonViews)
-        {
-            if (view.IsMine)
-            {
-                PhotonNetwork.Destroy(view.gameObject);
-            }
-        }
-
-        PhotonNetwork.RemoveBufferedRPCs();
-
         Debug.Log(PhotonNetwork.LocalPlayer.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name);
 
         ActivatePanel(InsideRoom_UI_Panel.name);
@@ -423,8 +409,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             }
         }
 
-        PhotonNetwork.RemoveBufferedRPCs();
-
         SceneManager.LoadScene("LobbyScene");
     }
 
@@ -459,11 +443,6 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         {
             isLoadingScene = true;
 
-            // Pastikan buffer bersih
-            PhotonNetwork.RemoveBufferedRPCs();
-            PhotonNetwork.DestroyAll();
-
-            // Mulai ulang level
             PhotonNetwork.LoadLevel(1);
         }
     }

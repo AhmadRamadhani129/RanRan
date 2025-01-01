@@ -4,16 +4,19 @@ using UnityEngine;
 
 public class SpectatorCameraController : MonoBehaviour
 {
-    private Camera targetCamera; // Kamera di dalam GameObject target
-    public Transform target; // Transform target (opsional untuk fallback)
-    public float smoothSpeed = 0.125f; // Kecepatan interpolasi untuk posisi
+    private Camera targetCamera;
+    public Transform target;
+    public float smoothSpeed = 0.125f;
 
     void LateUpdate()
     {
         if (targetCamera != null)
         {
-            // Sinkronkan posisi dan rotasi dengan targetCamera
-            Vector3 smoothedPosition = Vector3.Lerp(transform.position, targetCamera.transform.position, smoothSpeed);
+            Vector3 forwardDirection = targetCamera.transform.forward;
+            Vector3 desiredPosition = targetCamera.transform.position + forwardDirection * 1f;
+
+
+            Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
             transform.position = smoothedPosition;
 
             Quaternion smoothedRotation = Quaternion.Slerp(transform.rotation, targetCamera.transform.rotation, smoothSpeed);
@@ -28,11 +31,11 @@ public class SpectatorCameraController : MonoBehaviour
         }
     }
 
+
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;
 
-        // Coba temukan kamera di dalam GameObject target
         if (newTarget != null)
         {
             Camera foundCamera = newTarget.GetComponentInChildren<Camera>();
