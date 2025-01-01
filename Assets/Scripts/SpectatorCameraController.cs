@@ -6,31 +6,33 @@ public class SpectatorCameraController : MonoBehaviour
 {
     private Camera targetCamera;
     public Transform target;
-    public float smoothSpeed = 0.125f;
+    public float smoothSpeed = 0.1f;
 
     void LateUpdate()
     {
         if (targetCamera != null)
         {
-            Vector3 forwardDirection = targetCamera.transform.forward;
-            Vector3 desiredPosition = targetCamera.transform.position + forwardDirection * 1f;
-
-
+            Vector3 desiredPosition = targetCamera.transform.position + targetCamera.transform.forward;
             Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
             transform.position = smoothedPosition;
 
-            Quaternion smoothedRotation = Quaternion.Slerp(transform.rotation, targetCamera.transform.rotation, smoothSpeed);
+            Quaternion desiredRotation = targetCamera.transform.rotation;
+            Quaternion smoothedRotation = Quaternion.Slerp(transform.rotation, desiredRotation, smoothSpeed);
             transform.rotation = smoothedRotation;
+
+            Debug.Log($"Camera Position: {transform.position}, Camera Rotation: {transform.rotation.eulerAngles}");
         }
         else if (target != null)
         {
-            // Fallback: Kamera mengikuti transform target jika targetCamera tidak tersedia
-            Vector3 desiredPosition = target.position;
-            transform.position = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
-            transform.LookAt(target);
+            Vector3 desiredPosition = target.position + target.forward * 2f;
+            Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
+            transform.position = smoothedPosition;
+
+            Quaternion desiredRotation = target.rotation;
+            Quaternion smoothedRotation = Quaternion.Slerp(transform.rotation, desiredRotation, smoothSpeed);
+            transform.rotation = smoothedRotation;
         }
     }
-
 
     public void SetTarget(Transform newTarget)
     {
