@@ -380,13 +380,6 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("Di RANRAN: " + player.name);
         player.GetComponent<PlayerMovementController>().enabled = false;
-
-        Renderer playerRenderer = player.GetComponent<Renderer>();
-        if (playerRenderer != null)
-        {
-            playerRenderer.material.color = Color.gray;
-        }
-
         EnableSpectatorCamera(player);
     }
 

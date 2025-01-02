@@ -52,7 +52,6 @@ public class PlayerMovementController : MonoBehaviour
         Vector3 forward = cam.transform.forward;
         Vector3 right = cam.transform.right;
 
-        //biar arahnya ga kebawah
         forward.y = 0;
         right.y = 0;
 
@@ -67,6 +66,9 @@ public class PlayerMovementController : MonoBehaviour
 
             Vector3 velocity = new Vector3(moveDirection.x, rb.velocity.y, moveDirection.z);
             rb.velocity = velocity;
+
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            rb.rotation = Quaternion.Slerp(rb.rotation, targetRotation, Time.fixedDeltaTime * moveSpeed);
         }
         else
         {

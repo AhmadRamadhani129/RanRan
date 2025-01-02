@@ -20,7 +20,6 @@ public class SpectatorCameraController : MonoBehaviour
             Quaternion smoothedRotation = Quaternion.Slerp(transform.rotation, desiredRotation, smoothSpeed);
             transform.rotation = smoothedRotation;
 
-            Debug.Log($"Camera Position: {transform.position}, Camera Rotation: {transform.rotation.eulerAngles}");
         }
         else if (target != null)
         {
