@@ -13,6 +13,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     private bool canStart;
     private bool isLoadingScene = false;
 
+    public Animator animator;
+
     private Dictionary<string, RoomInfo> cachedRoomList;
     private Dictionary<string, GameObject> roomListGameObjects;
     private Dictionary<int, GameObject> playerListGameObjects;
@@ -98,6 +100,9 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             roomOptions.MaxPlayers = (byte)maxPlayers;
         }
         PhotonNetwork.CreateRoom(roomName, roomOptions);
+
+        animator.SetBool("Right", true);
+        animator.SetBool("Left", false);
     }
 
     public void OnCancelButtonClicked()
@@ -121,6 +126,9 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void OnLeaveGameButtonClicked()
     {
+        animator.SetBool("Left", true);
+        animator.SetBool("Right", false);
+
         CleanUpPlayerList();
 
         PhotonNetwork.LeaveRoom();
@@ -204,6 +212,9 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         else
         {
             Debug.Log("Player is not in a room.");
+            animator.SetBool("Left", true);
+            animator.SetBool("Right", false);
+
             ActivatePanel(Login_UI_Panel.name);
         }
     }
