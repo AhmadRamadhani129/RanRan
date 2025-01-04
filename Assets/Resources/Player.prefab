@@ -68,7 +68,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   joystick: {fileID: 0}
   fixedTouchField: {fileID: 0}
-  moveSpeed: 10
   maxInputThreshold: 0.1
 --- !u!54 &8439153045956320856
 Rigidbody:
@@ -236,7 +235,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 753378788238947949}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.01, z: 0.64}
+  m_LocalPosition: {x: 0, y: 0.4, z: 0.213}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

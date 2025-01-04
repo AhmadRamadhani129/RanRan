@@ -12,7 +12,7 @@ public class PlayerMovementController : MonoBehaviour
     public FixedTouchField fixedTouchField;
 
     private Rigidbody rb;
-    public float moveSpeed = 9f;
+    private float moveSpeed = 8f;
     public float maxInputThreshold = 0.1f;
 
     // Start is called before the first frame update
