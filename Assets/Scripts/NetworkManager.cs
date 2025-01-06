@@ -58,10 +58,14 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public GameObject JoinRoomPassword_UI_Panel;
     public InputField roomPasswordInputFieldJoin;
 
+    [Header("Credits UI Panel")]
+    public GameObject Credits_UI_Panel;
+
     #region UI Callbacks
 
     public void OnLoginButtonClicked()
     {
+        SoundManager.Instance.PlayButtonSound();
         string playerName = playerNameInput.text;
         if (!string.IsNullOrEmpty(playerName))
         {
@@ -77,6 +81,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void OnCreateRoomButtonClicked()
     {
+        SoundManager.Instance.PlayButtonSound();
         string roomName = roomNameInputField.text;
         int maxPlayers;
         string roomPassword = roomPasswordInputField.text;
@@ -107,11 +112,13 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void OnCancelButtonClicked()
     {
+        SoundManager.Instance.PlayButtonSound();
         ActivatePanel(GameOptions_UI_Panel.name);
     }
 
     public void OnShowRoomListButtonClicked()
     {
+        SoundManager.Instance.PlayButtonSound();
         if (!PhotonNetwork.InLobby)
         {
             PhotonNetwork.JoinLobby();
@@ -121,11 +128,13 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void OnButtonBackClicked()
     {
+        SoundManager.Instance.PlayButtonSound();
         ActivatePanel(GameOptions_UI_Panel.name);
     }
 
     public void OnLeaveGameButtonClicked()
     {
+        SoundManager.Instance.PlayButtonSound();
         animator.SetBool("Left", true);
         animator.SetBool("Right", false);
 
@@ -140,8 +149,15 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         maxPlayerInputField.text = "";
     }
 
+    public void OnExit()
+    {
+        SoundManager.Instance.PlayButtonSound();
+        Application.Quit();
+    }
+
     public void OnJoinRandomRoomButtonClicked()
     {
+        SoundManager.Instance.PlayButtonSound();
         PhotonNetwork.RemoveBufferedRPCs();
         ActivatePanel(JoinRandomRoom_UI_Panel.name);
         PhotonNetwork.JoinRandomRoom();
@@ -149,6 +165,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void OnJoinRoomButtonClicked(string _roomName)
     {
+        SoundManager.Instance.PlayButtonSound();
         PhotonNetwork.RemoveBufferedRPCs();
         selectedRoomName = _roomName;
 
@@ -157,6 +174,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void OnConfirmJoinRoomButtonClicked()
     {
+        SoundManager.Instance.PlayButtonSound();
         string enteredPassword = roomPasswordInputFieldJoin.text;
 
         if (cachedRoomList.ContainsKey(selectedRoomName))
@@ -441,7 +459,20 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         Login_UI_Panel.SetActive(panelToBeActivated.Equals(Login_UI_Panel.name));
         GameOptions_UI_Panel.SetActive(panelToBeActivated.Equals(GameOptions_UI_Panel.name));
-        CreateRoom_UI_Panel.SetActive(panelToBeActivated.Equals(CreateRoom_UI_Panel.name));
+
+        Credits_UI_Panel.SetActive(panelToBeActivated.Equals(Credits_UI_Panel.name));
+
+
+        if (panelToBeActivated.Equals(CreateRoom_UI_Panel.name)){
+            SoundManager.Instance.PlayButtonSound();
+            CreateRoom_UI_Panel.SetActive(panelToBeActivated.Equals(CreateRoom_UI_Panel.name));
+        }
+        else
+        {
+            CreateRoom_UI_Panel.SetActive(panelToBeActivated.Equals(CreateRoom_UI_Panel.name));
+        }
+
+
         InsideRoom_UI_Panel.SetActive(panelToBeActivated.Equals(InsideRoom_UI_Panel.name));
         RoomList_UI_Panel.SetActive(panelToBeActivated.Equals(RoomList_UI_Panel.name));
         JoinRandomRoom_UI_Panel.SetActive(panelToBeActivated.Equals(JoinRandomRoom_UI_Panel.name));
@@ -456,6 +487,12 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
             PhotonNetwork.LoadLevel(1);
         }
+    }
+
+    public void OnCreditsButtonClicked()
+    {
+        SoundManager.Instance.PlayButtonSound();
+        ActivatePanel(Credits_UI_Panel.name);
     }
 
 

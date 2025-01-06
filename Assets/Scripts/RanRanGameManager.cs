@@ -25,6 +25,9 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     private int totalItem;
     private TextMeshProUGUI totalItemText;
 
+    private TextMeshProUGUI InfoText;
+    private GameObject analogUI;
+
     public static RanRanGameManager instance;
 
     private List<int> usedSpawnPoints = new List<int>();
@@ -50,6 +53,7 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.IsConnected)
         {
+
             playerStatus = new Dictionary<int, bool>();
             playersAlive = PhotonNetwork.PlayerList.Length; // Semua pemain awalnya hidup
 
@@ -84,6 +88,12 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
 
             if (PhotonNetwork.LocalPlayer.ActorNumber == actorNumber)
             {
+                InfoText = GameObject.Find("InfoText (TMP)").GetComponent<TextMeshProUGUI>();
+                analogUI = GameObject.Find("Fixed Joystick");
+
+                InfoText.text = "Spectate";
+                analogUI.SetActive(false);
+
                 GameObject localPlayer = PhotonNetwork.LocalPlayer.TagObject as GameObject;
                 SetPlayerToSpectator(localPlayer);
             }
@@ -118,6 +128,7 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
         yield return new WaitForSeconds(0.5f);
 
         GameObject playerUI = GameObject.Find("PlayerUI(Clone)");
+
         if (playerUI != null)
         {
             GameObject totalTextbox = GameObject.Find("TotalTextbox");
@@ -168,6 +179,8 @@ public class RanRanGameManager : MonoBehaviourPunCallbacks
 
                 // Broadcast ke semua klien untuk menyinkronkan TagObject
                 PhotonView.Get(this).RPC("SetTagObjectRPC", RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber, playerView.ViewID);
+
+
             }
             else
             {
