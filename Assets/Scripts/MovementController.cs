@@ -18,25 +18,20 @@ public class MovementController : MonoBehaviour
 
     void Update()
     {
-        // calculate movement velocity a 3D vector
         float _xMovement = Input.GetAxis("Horizontal");
         float _zMovement = Input.GetAxis("Vertical");
 
         Vector3 _movementHorizontal = transform.right * _xMovement;
         Vector3 _movementVertical = transform.forward * _zMovement;
 
-        // final movement velocity 
         Vector3 _movementVelocity = (_movementHorizontal + _movementVertical).normalized * speed;
 
-        // Apply movement
         Move(_movementVelocity);
 
-        // calculate rotation as 3D vector for turning around
         float _yRotation = Input.GetAxis("Mouse X") * lookSensitivity * Time.deltaTime;
         Vector3 _rotationVector = new Vector3(0, _yRotation, 0);
         rb.MoveRotation(rb.rotation * Quaternion.Euler(_rotationVector));
 
-        // Calculate look up and down rotation
         float _cameraUpAndDownRotation = Input.GetAxis("Mouse Y") * lookSensitivity * Time.deltaTime;
         if (fpsCamera != null)
         {

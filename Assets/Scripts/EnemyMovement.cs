@@ -7,8 +7,8 @@ public class EnemyMovement : MonoBehaviour
 {
     [SerializeField] private NavMeshAgent agent;
     [SerializeField] private Transform[] patrolPoints;
-    [SerializeField] private float chaseRadius = 10f;  // Radius pengejaran
-    [SerializeField] private float stopChasingRadius = 15f; // Radius berhenti mengejar
+    [SerializeField] private float chaseRadius = 10f;
+    [SerializeField] private float stopChasingRadius = 15f;
     private bool isChasing = false;
     private Transform player;
     private Transform currentPatrolPoint;
@@ -17,7 +17,7 @@ public class EnemyMovement : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
 
-        // Tentukan titik patrol yang ada
+        
         patrolPoints = new Transform[5];
         for (int i = 1; i <= 5; i++)
         {
@@ -32,13 +32,13 @@ public class EnemyMovement : MonoBehaviour
             }
         }
 
-        // Mulai patrol
+        
         StartCoroutine(Patrol());
     }
 
     void Update()
     {
-        // Cek keberadaan pemain dalam radius pengejaran
+        
         Collider[] colliders = Physics.OverlapSphere(transform.position, chaseRadius);
         bool playerDetected = false;
 
@@ -52,23 +52,23 @@ public class EnemyMovement : MonoBehaviour
             }
         }
 
-        // Jika pemain terdeteksi dan musuh belum mengejar
+        
         if (playerDetected && !isChasing)
         {
             StartChasing();
         }
 
-        // Jika musuh sedang mengejar pemain
+        
         if (isChasing)
         {
-            // Periksa jika pemain keluar dari radius berhenti mengejar
+            
             if (player == null || Vector3.Distance(transform.position, player.position) > stopChasingRadius)
             {
                 StopChasing();
             }
             else
             {
-                agent.SetDestination(player.position); // Tetap mengejar pemain
+                agent.SetDestination(player.position); 
             }
         }
     }
@@ -79,13 +79,13 @@ public class EnemyMovement : MonoBehaviour
         {
             isChasing = true;
 
-            // Periksa apakah player masih valid sebelum menetapkan tujuan
+            
             if (player != null)
             {
                 agent.SetDestination(player.position);
             }
 
-            // Hentikan coroutine patrol saat mulai mengejar
+            
             StopAllCoroutines();
         }
     }
@@ -97,7 +97,7 @@ public class EnemyMovement : MonoBehaviour
             isChasing = false;
             Debug.Log("Player out of range or destroyed. Returning to patrol.");
 
-            // Hentikan pengejaran dan mulai patrol lagi
+            
             StopAllCoroutines();
             StartCoroutine(Patrol());
         }
@@ -107,7 +107,7 @@ public class EnemyMovement : MonoBehaviour
     {
         while (!isChasing)
         {
-            // Pilih titik patrol secara acak
+            
             currentPatrolPoint = GetRandomPatrolPoint();
 
             if (currentPatrolPoint != null)
@@ -115,13 +115,13 @@ public class EnemyMovement : MonoBehaviour
                 agent.SetDestination(currentPatrolPoint.position);
             }
 
-            // Tunggu hingga musuh mencapai titik tujuan atau mulai mengejar
+           
             while (!agent.pathPending && agent.remainingDistance > agent.stoppingDistance && !isChasing)
             {
                 yield return null;
             }
 
-            // Beri sedikit waktu sebelum bergerak ke titik patrol berikutnya
+            
             yield return new WaitForSeconds(1f);
         }
     }
@@ -138,7 +138,7 @@ public class EnemyMovement : MonoBehaviour
         return patrolPoints[randomIndex];
     }
 
-    // Debug untuk melihat radius pengejaran
+    
     void OnDrawGizmos()
     {
         Gizmos.color = Color.red;

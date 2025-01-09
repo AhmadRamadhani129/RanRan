@@ -27,15 +27,12 @@ public class EnemyHit : MonoBehaviourPunCallbacks
             {
                 int actorNumber = playerPhotonView.Owner.ActorNumber;
 
-                // Tandai pemain sebagai mati di RanRanGameManager
                 RanRanGameManager.instance.PlayerDied(actorNumber);
 
                 Debug.Log("Player hit by enemy and marked as dead: " + playerPhotonView.gameObject.name);
 
-                // Lakukan RPC untuk menghancurkan pemain secara global
                 PhotonView.Get(RanRanGameManager.instance).RPC("RPC_DestroyPlayer", RpcTarget.AllBuffered, playerPhotonView.ViewID);
 
-                // Coba cari pemain hidup berikutnya untuk dispektasikan
                 GameObject nextAlivePlayer = RanRanGameManager.instance.GetNextAlivePlayer();
                 if (nextAlivePlayer != null)
                 {

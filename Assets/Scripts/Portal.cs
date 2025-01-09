@@ -6,7 +6,7 @@ using Photon.Realtime;
 
 public class Portal : MonoBehaviourPunCallbacks
 {
-    private List<int> playersInCollider = new List<int>(); // Melacak pemain berdasarkan ActorNumber
+    private List<int> playersInCollider = new List<int>();
 
     private void OnTriggerEnter(Collider other)
     {
@@ -16,8 +16,7 @@ public class Portal : MonoBehaviourPunCallbacks
 
             if (otherPhotonView != null && !playersInCollider.Contains(otherPhotonView.Owner.ActorNumber))
             {
-                playersInCollider.Add(otherPhotonView.Owner.ActorNumber); // Tambahkan pemain ke daftar
-
+                playersInCollider.Add(otherPhotonView.Owner.ActorNumber);
                 CheckAllPlayersInPortal();
             }
         }
@@ -31,14 +30,13 @@ public class Portal : MonoBehaviourPunCallbacks
 
             if (otherPhotonView != null && playersInCollider.Contains(otherPhotonView.Owner.ActorNumber))
             {
-                playersInCollider.Remove(otherPhotonView.Owner.ActorNumber); // Hapus pemain dari daftar jika keluar
+                playersInCollider.Remove(otherPhotonView.Owner.ActorNumber); 
             }
         }
     }
 
     private void CheckAllPlayersInPortal()
     {
-        // Dapatkan GameManager untuk mengakses status pemain
         RanRanGameManager gameManager = RanRanGameManager.instance;
 
         if (gameManager == null)
@@ -49,18 +47,16 @@ public class Portal : MonoBehaviourPunCallbacks
 
         foreach (Player photonPlayer in PhotonNetwork.PlayerList)
         {
-            // Cek apakah pemain hidup dan berada di portal
             if (gameManager.playerStatus.ContainsKey(photonPlayer.ActorNumber) &&
-                !gameManager.playerStatus[photonPlayer.ActorNumber]) // Pemain hidup (bukan spectate)
+                !gameManager.playerStatus[photonPlayer.ActorNumber])
             {
                 if (!playersInCollider.Contains(photonPlayer.ActorNumber))
                 {
-                    return; // Ada pemain hidup yang belum di portal
+                    return;
                 }
             }
         }
 
-        // Semua pemain hidup berada di portal
         Debug.Log("All alive players are in the portal. Ending level.");
         photonView.RPC("HandleAllPlayersInPortal", RpcTarget.All);
     }
@@ -68,7 +64,6 @@ public class Portal : MonoBehaviourPunCallbacks
     [PunRPC]
     private void HandleAllPlayersInPortal()
     {
-        // Semua pemain keluar dari level
         RanRanGameManager.instance.OnLeaveLevel();
     }
 }

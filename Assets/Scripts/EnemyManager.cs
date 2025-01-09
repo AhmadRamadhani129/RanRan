@@ -23,12 +23,10 @@ public class EnemyManager : MonoBehaviourPunCallbacks
         }
     }
 
-    // Fungsi untuk spawn musuh
     void SpawnEnemy()
     {
         if (enemyPrefab != null && spawnPoint != null)
         {
-            // Gunakan InstantiateRoomObject agar musuh tidak terikat dengan player
             enemyInstance = PhotonNetwork.InstantiateRoomObject(enemyPrefab.name, spawnPoint.position, spawnPoint.rotation);
         }
     }
